@@ -42,7 +42,6 @@ EVAL_SPLIT = None
 DEFAULT_AUDIO_COL = "audio"
 DEFAULT_TEXT_COL = "text"
 
-# Requested languages (+ your existing extras)
 LANGUAGES: Dict[str, str] = {
     "Swahili (Kiswahili)": "swh",
     "English": "eng",
@@ -52,7 +51,6 @@ LANGUAGES: Dict[str, str] = {
     "Igbo": "ibo",
     "Afrikaans": "afr",
 
-    # Existing extras (optional)
     "Somali (Soomaaliga)": "som",
     "Yoruba (Yorùbá)": "yor",
     "Xhosa (isiXhosa)": "xho",
@@ -110,7 +108,6 @@ VOICE_LIBRARY_BY_LANG: Dict[str, Dict[str, str]] = {
     "ibo": {"Ongea Igbo — Meta MMS": "facebook/mms-tts-ibo"},
     "afr": {"Ongea Afrikaans — Meta MMS": "facebook/mms-tts-afr"},
 
-    # Existing extras
     "som": {"Ongea Somali — Meta MMS": "facebook/mms-tts-som"},
     "yor": {"Ongea Yoruba — Meta MMS": "facebook/mms-tts-yor"},
     "xho": {"Ongea Xhosa — Meta MMS": "facebook/mms-tts-xho"},
@@ -511,20 +508,20 @@ def write_wav(path: Path, audio: np.ndarray, sr: int):
 # CHATGPT-LIKE STREAMLIT UI
 # =========================
 
+DISCLAIMER_TEXT = "Ongea can make mistakes. Always listen and double check before you export."
+
 def _init_state(st):
-    st.session_state.setdefault("theme", "dark")            # "dark" | "light"
+    st.session_state.setdefault("theme", "dark")
     st.session_state.setdefault("sidebar_open", True)
-    st.session_state.setdefault("mode", "Ongea")           # "Ongea" | "Batch"
+    st.session_state.setdefault("mode", "Ongea")
     st.session_state.setdefault("lang_name", "Swahili (Kiswahili)")
     st.session_state.setdefault("voice_name", None)
     st.session_state.setdefault("speed", 1.0)
     st.session_state.setdefault("pitch", 0.0)
 
-    # Multi-chat like ChatGPT (in-session)
-    st.session_state.setdefault("chats", [])               # list of {id, title, created, messages}
+    st.session_state.setdefault("chats", [])
     st.session_state.setdefault("active_chat_id", None)
 
-    # input buffers
     st.session_state.setdefault("draft_ongea", "")
     st.session_state.setdefault("draft_batch", "")
 
@@ -537,7 +534,7 @@ def _new_chat(st):
         "id": cid,
         "title": "New voice session",
         "created": datetime.now().isoformat(),
-        "messages": [],  # list of {role:'user'|'assistant', text, audio_path?, meta?}
+        "messages": [],
     }
     st.session_state.chats.append(chat)
     st.session_state.active_chat_id = cid
@@ -570,8 +567,6 @@ def get_voice_loader():
 
 def inject_css(st, theme: str, sidebar_open: bool):
     sbw = 292
-    sb_offset = sbw if sidebar_open else 0
-    sb_half = int(sb_offset / 2)
     sb_tx = "0%" if sidebar_open else "-110%"
 
     st.markdown(f"""
@@ -642,19 +637,16 @@ html, body {{
 
 .block-container {{
   max-width: 860px !important;
-  padding-top: 1.1rem !important;
-  padding-bottom: 7rem !important;
-
+  padding-top: 1.05rem !important;
+  padding-bottom: 7.9rem !important;
   margin-left: auto !important;
   margin-right: auto !important;
-
-  transform: translateX({sb_half}px);
-  transition: transform 260ms ease;
+  transform: translateX(0px) !important;
 }}
-@media (max-width: 920px) {{
-  .block-container {{
-    transform: translateX(0px) !important;
-  }}
+
+[data-testid="stHorizontalBlock"],
+[data-testid="stColumn"] {{
+  overflow: visible !important;
 }}
 
 [data-testid="stSidebar"] {{
@@ -679,8 +671,9 @@ html, body {{
   align-items:center;
   justify-content:space-between;
   gap: 0.75rem;
-  padding: 0.15rem 0.15rem 0.65rem 0.15rem;
+  padding: 0.15rem 0.00rem 0.15rem 0.00rem;
 }}
+
 .oge-brand {{
   display:flex; align-items:center; gap: 0.7rem;
 }}
@@ -692,7 +685,7 @@ html, body {{
   display:flex; align-items:center; justify-content:center;
 }}
 .oge-brandtext {{
-  font-weight: 800;
+  font-weight: 850;
   letter-spacing: -0.02em;
   line-height: 1.05;
 }}
@@ -703,38 +696,69 @@ html, body {{
 }}
 
 .oge-actions {{
-  display:flex; align-items:center; gap: 0.35rem;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap: 0.30rem;
 }}
+
 .oge-iconbtn .stButton>button {{
-  width: 42px !important; height: 42px !important;
+  width: 42px !important;
+  height: 42px !important;
   border-radius: 12px !important;
-  border: 1px solid var(--border) !important;
-  background: var(--surface) !important;
-  box-shadow: var(--shadow2);
+
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+
   padding: 0 !important;
-  font-size: 1.05rem !important;
-  transition: transform 150ms ease, filter 150ms ease;
+  font-size: 1.18rem !important;
+  color: var(--text) !important;
+
+  transition: transform 150ms ease, background 150ms ease, filter 150ms ease;
 }}
 .oge-iconbtn .stButton>button:hover {{
   transform: translateY(-1px);
+  background: rgba(107,102,255,{"0.10" if theme=="light" else "0.14"}) !important;
   filter: brightness(1.02);
 }}
+.oge-iconbtn .stButton>button:active {{
+  transform: translateY(0px);
+}}
+
+.oge-pop {{
+  display:flex;
+  justify-content:flex-end;
+}}
 .oge-pop .stButton>button {{
-  border-radius: 999px !important;
-  border: 1px solid var(--border) !important;
-  background: var(--surface) !important;
-  box-shadow: var(--shadow2);
-  font-weight: 750 !important;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 12px !important;
+
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+
+  padding: 0 !important;
+  font-size: 1.18rem !important;
+  color: var(--text) !important;
+  white-space: nowrap !important;
+
+  transition: transform 150ms ease, background 150ms ease, filter 150ms ease;
+}}
+.oge-pop .stButton>button:hover {{
+  transform: translateY(-1px);
+  background: rgba(25,182,173,{"0.10" if theme=="light" else "0.14"}) !important;
 }}
 
 .oge-hero {{
-  margin-top: 5.6rem;
+  margin-top: 5.4rem;
   text-align: center;
   animation: oge-fadeup 520ms ease;
 }}
 .oge-hero h1 {{
   font-size: 2.2rem;
-  font-weight: 850;
+  font-weight: 860;
   letter-spacing: -0.03em;
   margin: 0 0 0.6rem 0;
 }}
@@ -785,7 +809,7 @@ html, body {{
 }}
 
 .oge-feed {{
-  margin-top: 0.35rem;
+  margin-top: 0.55rem;
   display:flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -826,18 +850,15 @@ audio {{
   right: 0;
   bottom: 0;
 
-  padding: 0.9rem 0.9rem 1.15rem 0.9rem;
-  padding-left: calc(0.9rem + {sb_offset}px);
+  padding: 0.85rem 0.9rem 0.9rem 0.9rem;
 
   display:flex;
-  justify-content:center;
+  flex-direction: column;
+  align-items:center;
+  gap: 0.45rem;
+
   pointer-events:none;
   z-index: 998;
-}}
-@media (max-width: 920px) {{
-  .oge-inputwrap {{
-    padding-left: 0.9rem !important;
-  }}
 }}
 
 .oge-inputcard {{
@@ -849,6 +870,16 @@ audio {{
   padding: 0.6rem 0.6rem;
   pointer-events:auto;
   backdrop-filter: blur(10px);
+}}
+
+.oge-disclaimer {{
+  width: min(860px, calc(100% - 1.2rem));
+  text-align:center;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 650;
+  pointer-events:none;
+  opacity: {"0.78" if theme=="light" else "0.74"};
 }}
 
 .oge-send .stButton>button {{
@@ -863,14 +894,16 @@ audio {{
 
 .oge-modechip {{
   display:flex;
+  justify-content:center;
   gap: 0.4rem;
   margin-bottom: 0.35rem;
+  width: 100%;
 }}
 .oge-modechip span {{
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 900;
   color: var(--muted) !important;
-  padding: 0.22rem 0.52rem;
+  padding: 0.22rem 0.62rem;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface2);
@@ -934,8 +967,7 @@ def sidebar_view(st):
 
 
 def topbar(st):
-    # Keep your overall split
-    left, right = st.columns([0.68, 0.32], gap="small")
+    left, right = st.columns([0.72, 0.28], gap="small")
 
     with left:
         st.markdown("""
@@ -950,28 +982,28 @@ def topbar(st):
 </div>
 """, unsafe_allow_html=True)
 
-    # FIX: use real Streamlit columns for the three controls so they stay on one line
     with right:
-        c1, c2, c3 = st.columns([0.22, 0.22, 0.56], gap="small")
+        # Icons only, no boxy cards, and popover won't get clipped
+        c1, c2, c3 = st.columns([1, 1, 1], gap="small")
 
         with c1:
             st.markdown('<div class="oge-iconbtn">', unsafe_allow_html=True)
             if st.button("☰", key="btn_sb", help="Toggle sidebar"):
                 st.session_state.sidebar_open = not st.session_state.sidebar_open
                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
         with c2:
             st.markdown('<div class="oge-iconbtn">', unsafe_allow_html=True)
             if st.button("🌙" if st.session_state.theme == "light" else "☀️", key="btn_theme", help="Toggle theme"):
                 st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
         with c3:
             st.markdown('<div class="oge-pop">', unsafe_allow_html=True)
-            pop = st.popover("⚙️ Settings")
-            st.markdown('</div>', unsafe_allow_html=True)
+            pop = st.popover("⚙️", help="Settings")
+            st.markdown("</div>", unsafe_allow_html=True)
             with pop:
                 settings_panel(st)
 
@@ -1052,7 +1084,7 @@ def render_feed(st, chat):
             st.markdown(f"""
 <div class="oge-msg user">
   <div class="oge-bubble">
-    {escape_html(text).replace("\n", "<br/>")}
+    {escape_html(text).replace("\\n", "<br/>")}
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -1062,7 +1094,7 @@ def render_feed(st, chat):
   <div class="oge-bubble" style="width:100%;">
     <div style="font-weight:900;margin-bottom:0.35rem;">Ongea Output</div>
     <div style="color:var(--muted);font-weight:650;margin-bottom:0.55rem;">
-      {escape_html(msg.get("meta","")).replace("\n","<br/>")}
+      {escape_html(msg.get("meta","")).replace("\\n","<br/>")}
     </div>
   </div>
 </div>
@@ -1137,6 +1169,10 @@ def input_bar(st):
             _handle_batch_send(st, chat)
 
     st.markdown("</div></div>", unsafe_allow_html=True)
+
+    # ChatGPT-style tiny disclaimer (always visible, no scroll, no box)
+    st.markdown(f'<div class="oge-disclaimer">{escape_html(DISCLAIMER_TEXT)}</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 
 def _handle_ongea_send(st, chat):
