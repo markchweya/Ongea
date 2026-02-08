@@ -571,6 +571,7 @@ def get_voice_loader():
 def inject_css(st, theme: str, sidebar_open: bool):
     sbw = 292
     sb_offset = sbw if sidebar_open else 0
+    sb_half = int(sb_offset / 2)
     sb_tx = "0%" if sidebar_open else "-110%"
 
     st.markdown(f"""
@@ -643,11 +644,17 @@ html, body {{
   max-width: 860px !important;
   padding-top: 1.1rem !important;
   padding-bottom: 7rem !important;
-  transition: margin-left 260ms ease;
-  margin-left: {sb_offset}px !important;
+
+  margin-left: auto !important;
+  margin-right: auto !important;
+
+  transform: translateX({sb_half}px);
+  transition: transform 260ms ease;
 }}
 @media (max-width: 920px) {{
-  .block-container {{ margin-left: 0 !important; }}
+  .block-container {{
+    transform: translateX(0px) !important;
+  }}
 }}
 
 [data-testid="stSidebar"] {{
@@ -818,12 +825,21 @@ audio {{
   left: 0;
   right: 0;
   bottom: 0;
+
   padding: 0.9rem 0.9rem 1.15rem 0.9rem;
+  padding-left: calc(0.9rem + {sb_offset}px);
+
   display:flex;
   justify-content:center;
   pointer-events:none;
   z-index: 998;
 }}
+@media (max-width: 920px) {{
+  .oge-inputwrap {{
+    padding-left: 0.9rem !important;
+  }}
+}}
+
 .oge-inputcard {{
   width: min(860px, calc(100% - 1.2rem));
   background: var(--surface);
@@ -834,6 +850,7 @@ audio {{
   pointer-events:auto;
   backdrop-filter: blur(10px);
 }}
+
 .oge-send .stButton>button {{
   width: 48px !important;
   height: 44px !important;
@@ -917,6 +934,7 @@ def sidebar_view(st):
 
 
 def topbar(st):
+    # Keep your overall split
     left, right = st.columns([0.68, 0.32], gap="small")
 
     with left:
@@ -932,29 +950,30 @@ def topbar(st):
 </div>
 """, unsafe_allow_html=True)
 
+    # FIX: use real Streamlit columns for the three controls so they stay on one line
     with right:
-        st.markdown('<div class="oge-actions">', unsafe_allow_html=True)
+        c1, c2, c3 = st.columns([0.22, 0.22, 0.56], gap="small")
 
-        st.markdown('<div class="oge-iconbtn">', unsafe_allow_html=True)
-        if st.button("☰", key="btn_sb", help="Toggle sidebar"):
-            st.session_state.sidebar_open = not st.session_state.sidebar_open
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+        with c1:
+            st.markdown('<div class="oge-iconbtn">', unsafe_allow_html=True)
+            if st.button("☰", key="btn_sb", help="Toggle sidebar"):
+                st.session_state.sidebar_open = not st.session_state.sidebar_open
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown('<div class="oge-iconbtn">', unsafe_allow_html=True)
-        if st.button("🌙" if st.session_state.theme == "light" else "☀️", key="btn_theme", help="Toggle theme"):
-            st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
+        with c2:
+            st.markdown('<div class="oge-iconbtn">', unsafe_allow_html=True)
+            if st.button("🌙" if st.session_state.theme == "light" else "☀️", key="btn_theme", help="Toggle theme"):
+                st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown('<div class="oge-pop">', unsafe_allow_html=True)
-        pop = st.popover("⚙️ Settings")
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        with pop:
-            settings_panel(st)
-
-        st.markdown('</div>', unsafe_allow_html=True)
+        with c3:
+            st.markdown('<div class="oge-pop">', unsafe_allow_html=True)
+            pop = st.popover("⚙️ Settings")
+            st.markdown('</div>', unsafe_allow_html=True)
+            with pop:
+                settings_panel(st)
 
 
 def settings_panel(st):
